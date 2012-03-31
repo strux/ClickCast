@@ -1,0 +1,10 @@
+h1. ClickCast
+
+Non-metropolitan forecasts visualization for outdoor enthusiast with weather dependent activities.
+
+h2. TODO (Overview)
+
+# Write forecast model.  It should consume the NOAA web service server-side and provide sensible output as JSON.
+# Develop some visualizations with Google Charts that will work well with mobile device screen resolutions.
+# Integrate user accounts, preferencs and location saving.
+# Wrap inot Sencha Touch framework.
