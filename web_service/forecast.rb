@@ -1,3 +1,4 @@
+require 'date'
 require 'rubygems'
 require 'rest_client'
 require 'rexml/document'
@@ -29,18 +30,28 @@ class ForecastFactory
 
   # Forecast object factory
   def create_forecasts
-    xpath = REXML::XPath
-
-    @locations.each_with_index do |location, i|
-      puts location[0]
-      xpath.each(@xml, "//parameters[@applicable-location='point#{i+1}']/*") do |metric| 
-        times = xpath.match(@xml, "//layout-key[text()='#{metric.attributes['time-layout']}']/following-sibling::start-valid-time")
-        puts "\t#{metric.name} - #{metric.attributes['time-layout']}"
-        j=0
-        metric.each_element("value"){ |v| puts "#{v.text} @ #{times[j]}"; j+=1 }
+    unless @xml and @xml.class != REXML::Document
+      xpath = REXML::XPath
+      forecasts = []
+      @locations.each_with_index do |location, i|
+        f = Forecast.new(location)
+        xpath.each(@xml, "//parameters[@applicable-location='point#{i+1}']/*") do |metric| 
+          times = xpath.match(@xml, "//layout-key[text()='#{metric.attributes['time-layout']}']/following-sibling::start-valid-time")
+          metric_values =[]
+          j=0
+          metric.each_element("value") do |v| 
+            metric_values << [DateTime.strptime(times[j].text,'%Y-%m-%dT%H:%M:%S%z'), v.text]
+            j+=1 
+          end
+          iname = "@" + metric.name.gsub("-", "_")
+          f.instance_variable_set(iname, metric_values)
+        end
+        forecasts << f
       end
+      forecasts
+    else    
+      raise "There is a problem with the forecast data. It does not appear to be XML."
     end
-
   end
 
   # Retieves forecasts data from NOAA web service
@@ -63,6 +74,12 @@ end
 
 class Forecast
 
-  attr_accessor :name, :lat, :lon
+  attr_accessor :name, :lat, :lon, :temperature
+
+  def initialize(location)
+    @name = location[0]
+    @lat = location[1]
+    @lon = location[2]
+  end
 
 end
